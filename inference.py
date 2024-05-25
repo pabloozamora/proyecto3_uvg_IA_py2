@@ -291,6 +291,23 @@ class ParticleFilter(InferenceModule):
         weight with each position) is incorrect and may produce errors.
         """
         "*** YOUR CODE HERE ***"
+        
+        '--- PROYECTO PREGUNTA 4 ---'
+        
+        self.particles = []
+        numParticles = self.numParticles
+        legalPositions = self.legalPositions
+        
+        # Distribuir uniformemente las particulas entre las posiciones legales
+        numPositions = len(legalPositions)
+        particlesPerPosition = numParticles // numPositions
+        remainderParticles = numParticles % numPositions
+
+        for pos in legalPositions:
+            self.particles += [pos] * particlesPerPosition
+        
+        # Distribuir las particulas restantes
+        self.particles += legalPositions[:remainderParticles]
 
     def observe(self, observation, gameState):
         """
@@ -323,7 +340,29 @@ class ParticleFilter(InferenceModule):
         emissionModel = busters.getObservationDistribution(noisyDistance)
         pacmanPosition = gameState.getPacmanPosition()
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+        
+        '--- PROYECTO PREGUNTA 4 ---'
+        # Manejar el caso especial donde el fantasma es capturado
+        if noisyDistance is None:
+            self.particles = [self.getJailPosition()] * self.numParticles # Todas las particulas son definidas como la posicion de carcel
+            return
+        
+        # Emission model retorna: P(O = noisyDistance | G = trueDistance)
+
+        # Ponderar las particulas basadas en la observacion
+        weights = util.Counter()
+        for p in self.particles:
+            trueDistance = util.manhattanDistance(p, pacmanPosition)
+            weights[p] += emissionModel[trueDistance]
+
+        # Manejar el caso donde todas las particulas tienen peso 0
+        if weights.totalCount() == 0:
+            self.initializeUniformly(gameState)
+        else:
+            self.particles = [util.sample(weights) for _ in range(self.numParticles)] # Actualizar las particulas segun su peso (probabilidad)
+            # De esta manera, si las particulas son acertadas, la distribucion de probabilidad se concentra en las particulas con mayor peso
+            # De lo contrario, la distribucion llegara a 0, obligando a las particulas a cambiar segun las observaciones
 
     def elapseTime(self, gameState):
         """
@@ -350,8 +389,14 @@ class ParticleFilter(InferenceModule):
         Counter object)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        #util.raiseNotDefined()
+        
+        '--- PROYECTO PREGUNTA 4 ---'
+        beliefs = util.Counter() # Crear objeto counter
+        for p in self.particles:
+            beliefs[p] += 1 # Sumar 1 a la creencia de la posicion por cada vez que aparezca en las particulas
+        beliefs.normalize() # Normalizar (simplemente divide cada probabilidad entre la sumatoria de probabilidades)
+        return beliefs
 class MarginalInference(InferenceModule):
     """
     A wrapper around the JointInference module that returns marginal beliefs
