@@ -162,5 +162,36 @@ class GreedyBustersAgent(BustersAgent):
         livingGhostPositionDistributions = \
             [beliefs for i, beliefs in enumerate(self.ghostBeliefs)
              if livingGhosts[i+1]]
+        
+        '--- PROYECTO PREGUNTA 3 ---'
+        
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+        
+        # Determinar la posicion mas probable de cada fantasma vivo
+        mostLikelyGhostPositions = []
+        for distribution in livingGhostPositionDistributions:
+            mostLikelyPosition = distribution.argMax()
+            mostLikelyGhostPositions.append(mostLikelyPosition)
+            
+        # De acuerdo con la posicion mas probable de cada fantasma, determinar el mas cercano a PacMan
+        closestGhostPos = None
+        minDistance = float('inf')
+        for pos in mostLikelyGhostPositions:
+            distance = self.distancer.getDistance(pacmanPosition, pos)
+            if distance < minDistance:
+                minDistance = distance
+                closestGhostPos = pos
+                
+        # Elegir la accion que minimiza la distancia al fantasma mas cercano a PacMan
+        bestAction = Directions.STOP
+        minActionDistance = float('inf')
+        
+        for action in gameState.getLegalPacmanActions():
+            successorPosition = Actions.getSuccessor(pacmanPosition, action)
+            distance = self.distancer.getDistance(successorPosition, closestGhostPos)
+            if distance < minActionDistance:
+                minActionDistance = distance
+                bestAction = action
+
+        return bestAction
