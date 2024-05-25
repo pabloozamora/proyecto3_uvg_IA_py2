@@ -235,8 +235,28 @@ class ExactInference(InferenceModule):
         are used and how they combine to give us a belief distribution over new
         positions after a time update from a particular position.
         """
+        
+        ' --- PROYECTO PREGUNTA 2 --- '
+        
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+        
+        newBeliefs = util.Counter()
+
+        # Para cada posible posicion actual del fantasma (oldPos):
+        for oldPos in self.legalPositions:
+            # Obtener la distribucion de nuevas posibles posiciones del fantasma desde oldPos
+            newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, oldPos))
+
+            # Actualizar las creencias de PacMan (Cadena de Markov: P(newPos | oldPos))
+            # Ley de Probabilidad total: Es posible llegar a una nueva posicion a partir de varias posiciones actuales (i.e., particiones)
+            # P(newPos) = Sumatoria para todas las oldPos de: P(newPos | oldPos) * P(oldPos) 
+            for newPos, prob in newPosDist.items():
+                newBeliefs[newPos] += prob * self.beliefs[oldPos]
+
+        # Normalizar
+        newBeliefs.normalize()
+        self.beliefs = newBeliefs
 
     def getBeliefDistribution(self):
         return self.beliefs
